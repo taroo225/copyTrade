@@ -59,7 +59,10 @@ def report_positions():
     try:
         data = request.get_json()
         positions = data.get("positions", [])
-        tickets = {ticket.ticket: ticket for ticket in Ticket.query.all()}
+        account = data.get("account", "")
+        if not account:
+            return jsonify({"success": False, "message": "Account not found"}), 404
+        tickets = {ticket.ticket: ticket for ticket in Ticket.query.filter_by(account=account).all()}
         commit = False
         for position in positions:
             tk = position.get("ticket")
@@ -81,6 +84,7 @@ def report_positions():
                 if "-" in symbol:
                     symbol = symbol.split("-")[0]
                 db.session.add(Ticket(ticket=tk, sl=sl, tp=tp,
+                                      account=account,
                                       symbol=symbol,
                                       comment=position.get("comment", ""),
                                       type=position.get("type", 0),
